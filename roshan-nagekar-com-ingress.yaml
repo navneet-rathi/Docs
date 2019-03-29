@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: roshan-ingress
+spec:
+  tls:
+  - hosts:
+    - roshan.nagekar.com
+  - host: roshan.nagekar.com
+    http:
+      paths:
+      - path: /tea
+        backend:
+          serviceName: tea-svc
+          servicePort: 80
+      - path: /php
+        backend:
+          serviceName: php-svc
+          servicePort: 80

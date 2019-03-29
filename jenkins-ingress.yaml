@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: jenkins-ingress
+spec:
+  tls:
+  - hosts:
+    - jenkins.rathi.com
+    secretName: cafe-secret
+  rules:
+  - host: jenkins.rathi.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: jenkins-svc
+          servicePort: 8080

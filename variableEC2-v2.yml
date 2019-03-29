@@ -1,0 +1,451 @@
+Description: Create a variable number of EC2 instance resources.
+Metadata:
+  'AWS::CloudFormation::Interface':
+    ParameterGroups:
+     -
+      Label:
+        default: "Instance Configuration"
+      Parameters:
+       - KeyPairName
+       - ImageId
+       - InstanceType
+       - UserName
+       - Password
+#       - InstanceCount
+     -
+      Label:
+        default: "Networking"
+      Parameters:
+        - VpcId
+        - Subnet1
+        - Subnet2
+        - SSHBastion
+     -
+      Label:
+        default: "Tag Information"
+      Parameters:
+       - EnvironmentTag
+       - ResourceName
+       - Application
+       - ApplicationOwner
+       - ApplicationTower
+       - ClarityID
+       - Domain
+       - Location
+       - OSName
+       - Name
+       - SupportContact
+       - SecurityPosture
+       - ProductTower
+
+Parameters:
+  VpcId:
+    Type: 'AWS::EC2::VPC::Id'
+    Description: VPC where the Security Group will belong
+    ConstraintDescription: Enter a valid VPC ID number
+  Subnet1:
+    Description: Existing management Tier Subnet 1 ID
+    Type: 'AWS::EC2::Subnet::Id'
+    Default: 
+  Subnet2:
+    Description: Existing management Tier Subnet 2 ID
+    Type: 'AWS::EC2::Subnet::Id'
+    Default: 
+  SSHBastion:
+    Description: SSH Bastion Host IP/CIDR
+    Type: String
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    Default: 10.0.0.0/8
+  Name:
+    Description: 'Application Name : To know how the naming convention needs to be. Please see : https://westernunion.jiveon.com/docs/DOC-17438-aws-resource-naming-conventions-policy'
+    Type: String
+    Default: Default app name
+  ApplicationOwner:
+    Description: 'Name : Email address : Contact phone number'
+    Type: String
+    Default: 'TestName : '
+  ProductTower:
+    Description: 'Specify the product tower'
+    Type: String
+    AllowedValues:
+      - 
+      -
+      -
+  ClarityID:
+    Description: 'Ticket ID where the resource request has been approved'
+    Type: String
+    Default: none
+  Application:
+    Description: 'Application Name and Details'
+    Type: String
+    Default: none
+  Domain:
+    Description: 'Domain Name'
+    Type: String
+    Default: none
+  ResourceName:
+    Description: 'Hyphen separated name e.g payment-gateway-server'
+    Type: String
+    Default: test-app-server
+  SupportContact:
+    Description: 'WU Team DL or Support Email address and Phone Number E.g ITIO-Team@wu.com : +91-9000090000'
+    Type: String
+    Default: ITIO_Cloud_TEC_Pune@westernunion.com
+  SecurityPosture:
+    Description: 'Compliance requirement (AML, PCI, SOC, or SOX)'
+    Type: String
+    AllowedValues:
+      - AML
+      - PCI
+      - SOC
+      - SOX
+      - none
+  KeyPairName:
+    Description: 'Name of an EC2 KeyPair to enable SSH access to the instance.'
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  InstanceCount:
+    Description: Number of EC2 instances (must be between 1 and 5).
+    Type: Number
+    Default: 1
+    MinValue: 1
+    MaxValue: 5
+    ConstraintDescription: Must be a number between 1 and 5.
+  DiskSize:
+    Description: 'Enter the Amount of primary disk you want in GB miniumum 8GB for Linux and 30 for Windows based system Secondary disks you can attach of your choice afterwards'
+    Type: Number
+    Default: 8
+    MinValue: 8
+    MaxValue : 1000
+  ImageId:
+    Description: Image ID to launch EC2 instances.
+    Type: AWS::EC2::Image::Id
+    # amzn-ami-hvm-2016.09.1.20161221-x86_64-gp2
+    Default: ami-f359cd8c
+  InstanceType:
+    Description: Instance type to launch EC2 instances.
+    Type: String
+    Default: t2.nano
+    AllowedValues: [ t2.nano, t2.small, t1.micro, t2.micro ]
+  UserName:
+    Description: Default Username with you want to login to system
+    Type: String
+    Default: wuadmin
+  Password:
+    Description: Default Password with you want to login to system
+    Type: String
+    Default: admin123
+
+Conditions:
+  Launch1: !Equals [1, 1]
+  Launch2: !Not [!Equals [1, !Ref InstanceCount]]
+  Launch3: !And
+  - !Not [!Equals [1, !Ref InstanceCount]]
+  - !Not [!Equals [2, !Ref InstanceCount]]
+  Launch4: !Or
+  - !Equals [4, !Ref InstanceCount]
+  - !Equals [5, !Ref InstanceCount]
+  Launch5: !Equals [5, !Ref InstanceCount]
+Resources:
+  ServerMgtSg:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref VpcId
+      GroupDescription: Security group for Managing the servers
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          CidrIp: 10.0.0.0/8
+          FromPort: '443'
+          ToPort: '443'
+        - IpProtocol: tcp
+          CidrIp: 10.0.0.0/8
+          FromPort: '80'
+          ToPort: '80'
+        - IpProtocol: tcp
+          CidrIp: 10.0.0.0/8
+          FromPort: '22'
+          ToPort: '22'
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          CidrIp: 10.0.0.0/8
+          FromPort: '443'
+          ToPort: '443'
+        - IpProtocol: tcp
+          CidrIp: 10.0.0.0/8
+          FromPort: '80'
+          ToPort: '80'
+        - IpProtocol: tcp
+          CidrIp: 10.0.0.0/8
+          FromPort: '22'
+          ToPort: '22'         
+      Tags:
+        - Key: Name
+          Value: !Ref Name
+        - Key: Application
+          Value: !Ref Application
+        - Key: ApplicationOwner
+          Value: !Ref ApplicationOwner
+        - Key: ProductTower
+          Value: !Ref ProductTower
+        - Key: ClarityID
+          Value: !Ref ClarityID
+        - Key: Domain
+          Value: !Ref Domain
+        - Key: SupportContact
+          Value: !Ref SupportContact
+        - Key: SecurityPosture
+          Value: !Ref SecurityPosture
+        - Key: ResourceName
+          Value: !Ref ResourceName
+  Instance1:
+    Condition: Launch1
+    #    Type: AWS::EC2::Instance
+    #    Properties:
+    #      ImageId: !Ref ImageId
+    #      InstanceType: !Ref InstanceType
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroupIds: 
+        - !Ref ServerMgtSg
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref ImageId
+      SubnetId: !Ref Subnet1 
+      BlockDeviceMappings:
+        -
+          DeviceName: "/dev/sda1"
+          Ebs:
+            VolumeSize: !Ref DiskSize #20
+            VolumeType: gp2
+      Tags:
+        - Key: Name
+          Value: !Ref Name
+        - Key: Application
+          Value: !Ref Application
+        - Key: ApplicationOwner
+          Value: !Ref ApplicationOwner
+        - Key: ProductTower
+          Value: !Ref ProductTower
+        - Key: ClarityID
+          Value: !Ref ClarityID
+        - Key: Domain
+          Value: !Ref Domain
+        - Key: SupportContact
+          Value: !Ref SupportContact
+        - Key: SecurityPosture
+          Value: !Ref SecurityPosture
+        - Key: ResourceName
+          Value: !Ref ResourceName
+      UserData: 
+        'Fn::Base64': !Sub |
+           #!/bin/bash -ex
+           pass=$(perl -e 'print crypt($ARGV[0], "password")'  ${Password} )
+           useradd -m -p $pass ${UserName} -s /bin/bash
+           sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+           echo "${UserName} ALL=(ALL)       ALL" >> /etc/sudoers
+           sudo systemctl restart sshd
+           sudo systemctl restart ssh
+           '
+
+  
+  Instance2:
+    Condition: Launch2
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroupIds: 
+        - !Ref ServerMgtSg
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref ImageId
+      SubnetId: !Ref Subnet2 
+      BlockDeviceMappings:
+        -
+          DeviceName: "/dev/sda1"
+          Ebs:
+            VolumeSize: !Ref DiskSize #20
+            VolumeType: gp2
+      Tags:
+        - Key: Name
+          Value: !Ref Name
+        - Key: Application
+          Value: !Ref Application
+        - Key: ApplicationOwner
+          Value: !Ref ApplicationOwner
+        - Key: ProductTower
+          Value: !Ref ProductTower
+        - Key: ClarityID
+          Value: !Ref ClarityID
+        - Key: Domain
+          Value: !Ref Domain
+        - Key: SupportContact
+          Value: !Ref SupportContact
+        - Key: SecurityPosture
+          Value: !Ref SecurityPosture
+        - Key: ResourceName
+          Value: !Ref ResourceName
+      UserData: 
+        'Fn::Base64': !Sub |
+           #!/bin/bash -ex
+           pass=$(perl -e 'print crypt($ARGV[0], "password")'  ${Password} )
+           useradd -m -p $pass ${UserName} -s /bin/bash
+           sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+           echo "${UserName} ALL=(ALL)       ALL" >> /etc/sudoers
+           sudo systemctl restart sshd
+           sudo systemctl restart ssh
+           '  
+  Instance3:
+    Condition: Launch3 
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroupIds: 
+        - !Ref ServerMgtSg
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref ImageId
+      SubnetId: !Ref Subnet2 
+      BlockDeviceMappings:
+        -
+          DeviceName: "/dev/sda1"
+          Ebs:
+            VolumeSize: !Ref DiskSize #20
+            VolumeType: gp2
+      Tags:
+        - Key: Name
+          Value: !Ref Name
+        - Key: Application
+          Value: !Ref Application
+        - Key: ApplicationOwner
+          Value: !Ref ApplicationOwner
+        - Key: ProductTower
+          Value: !Ref ProductTower
+        - Key: ClarityID
+          Value: !Ref ClarityID
+        - Key: Domain
+          Value: !Ref Domain
+        - Key: SupportContact
+          Value: !Ref SupportContact
+        - Key: SecurityPosture
+          Value: !Ref SecurityPosture
+        - Key: ResourceName
+          Value: !Ref ResourceName
+      UserData: 
+        'Fn::Base64': !Sub |
+           #!/bin/bash -ex
+           pass=$(perl -e 'print crypt($ARGV[0], "password")'  ${Password} )
+           useradd -m -p $pass ${UserName} -s /bin/bash
+           sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+           echo "${UserName} ALL=(ALL)       ALL" >> /etc/sudoers
+           sudo systemctl restart sshd
+           sudo systemctl restart ssh
+           '  
+  Instance4:
+    Condition: Launch4
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroupIds: 
+        - !Ref ServerMgtSg
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref ImageId
+      SubnetId: !Ref Subnet1 
+      BlockDeviceMappings:
+        -
+          DeviceName: "/dev/sda1"
+          Ebs:
+            VolumeSize: !Ref DiskSize #20
+            VolumeType: gp2
+      Tags:
+        - Key: Name
+          Value: !Ref Name
+        - Key: Application
+          Value: !Ref Application
+        - Key: ApplicationOwner
+          Value: !Ref ApplicationOwner
+        - Key: ProductTower
+          Value: !Ref ProductTower
+        - Key: ClarityID
+          Value: !Ref ClarityID
+        - Key: Domain
+          Value: !Ref Domain
+        - Key: SupportContact
+          Value: !Ref SupportContact
+        - Key: SecurityPosture
+          Value: !Ref SecurityPosture
+        - Key: ResourceName
+          Value: !Ref ResourceName
+      UserData: 
+        'Fn::Base64': !Sub |
+           #!/bin/bash -ex
+           pass=$(perl -e 'print crypt($ARGV[0], "password")'  ${Password} )
+           useradd -m -p $pass ${UserName} -s /bin/bash
+           sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+           echo "${UserName} ALL=(ALL)       ALL" >> /etc/sudoers
+           sudo systemctl restart sshd
+           sudo systemctl restart ssh
+           '
+  Instance5:
+    Condition: Launch5
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroupIds: 
+        - !Ref ServerMgtSg
+      KeyName: !Ref KeyPairName
+      ImageId: !Ref ImageId
+      SubnetId: !Ref Subnet1 
+      BlockDeviceMappings:
+        -
+          DeviceName: "/dev/sda1"
+          Ebs:
+            VolumeSize: !Ref DiskSize #20
+            VolumeType: gp2
+      Tags:
+        - Key: Name
+          Value: !Ref Name
+        - Key: Application
+          Value: !Ref Application
+        - Key: ApplicationOwner
+          Value: !Ref ApplicationOwner
+        - Key: ProductTower
+          Value: !Ref ProductTower
+        - Key: ClarityID
+          Value: !Ref ClarityID
+        - Key: Domain
+          Value: !Ref Domain
+        - Key: SupportContact
+          Value: !Ref SupportContact
+        - Key: SecurityPosture
+          Value: !Ref SecurityPosture
+        - Key: ResourceName
+          Value: !Ref ResourceName
+      UserData: 
+        'Fn::Base64': !Sub |
+           #!/bin/bash -ex
+           pass=$(perl -e 'print crypt($ARGV[0], "password")'  ${Password} )
+           useradd -m -p $pass ${UserName} -s /bin/bash
+           sed -i 's/^PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+           echo "${UserName} ALL=(ALL)       ALL" >> /etc/sudoers
+           sudo systemctl restart sshd
+           sudo systemctl restart ssh
+           '
+Outputs:
+  Instance1:
+    Condition: Launch1
+    Value: !Join ['', [!GetAtt 'Instance1.PrivateIp'] ]
+    Description: Instance 1 IP
+  Instance2:
+    Condition: Launch2
+    Value: !Join ['', [!GetAtt 'Instance2.PrivateIp'] ]
+    Description: Instance 2 IP
+  Instance3:
+    Condition: Launch3
+    Value: !Join ['', [!GetAtt 'Instance3.PrivateIp'] ]
+    Description: Instance 3 IP
+  Instance4:
+    Condition: Launch4
+    Value: !Join ['', [!GetAtt 'Instance4.PrivateIp'] ]
+    Description: Instance 4 IP
+  Instance5:
+    Condition: Launch5
+    Value: !Join ['', [!GetAtt 'Instance5.PrivateIp'] ]
+    Description: Instance 5 IP            
