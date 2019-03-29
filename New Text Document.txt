@@ -1,0 +1,23 @@
+aws ec2 describe-instances   --output text    --filters Name=instance-state-name,Values=running    --query 'Reservations[].Instances[?!not_null(Tags[?Key == `Owner`].Value)] | [].[InstanceId]'  >>
+
+for i in `cat <filename>`
+do
+echo "appling tags"
+aws ec2 create-tags --resources  $i --tags Key=Name,Value=<> 
+done
+
+ gitlab   root : $$78:mean:HANG:bank:1$$ 
+
+ VM,olWhTw6iY
+
+ $3qW5BP4u72c5IGoc=o.vklEhXCuOG6J -->10.38.10.177
+
+n2ws
+User: admin
+Pass: Wu8@ckupN2w5@dm!N
+
+lic
+825210765
+825210766
+
+
