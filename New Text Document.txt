@@ -16,8 +16,5 @@ n2ws
 User: admin
 Pass: Wu8@ckupN2w5@dm!N
 
-lic
-825210765
-825210766
 
 
